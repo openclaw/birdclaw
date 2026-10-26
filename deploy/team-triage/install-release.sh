@@ -12,6 +12,7 @@
 #   4. initialize the dedicated store on first install only
 #   5. point /opt/birdclaw-team/current at the release and restart both services
 #   6. health-check through the identity shim; roll back on failure
+#   7. enable the nightly store backup and prune old releases
 set -euo pipefail
 
 tarball="${1:?release tarball path}"
@@ -46,6 +47,8 @@ log "unpacked $release_id"
 # 2. Unit files and non-secret configuration come from the release itself.
 install -m 0644 "$target/deploy/team-triage/birdclaw-team.service" /etc/systemd/system/
 install -m 0644 "$target/deploy/team-triage/birdclaw-team-proxy.service" /etc/systemd/system/
+install -m 0644 "$target/deploy/team-triage/birdclaw-team-backup.service" /etc/systemd/system/
+install -m 0644 "$target/deploy/team-triage/birdclaw-team-backup.timer" /etc/systemd/system/
 install -o root -g birdclaw -m 0640 "$target/deploy/team-triage/mcbird.env" "$etc/team-triage.env"
 systemctl daemon-reload
 
@@ -78,7 +81,7 @@ unset key
 #    source row. These commands refuse to adopt any pre-existing private data.
 if [[ ! -e "$state/mentions/birdclaw.sqlite" ]]; then
 	cli=(/opt/node/bin/node "$target/bin/birdclaw.mjs" --json shared-inbox)
-	run_as() { runuser -u birdclaw -- env -i PATH=/usr/bin:/bin "$@"; }
+	run_as() { (umask 077 && runuser -u birdclaw -- env -i PATH=/usr/bin:/bin "$@"); }
 	run_as BIRDCLAW_HOME="$state/mentions" BIRDCLAW_TEST_SEED_DEMO_DATA=0 "${cli[@]}" init-team
 	run_as BIRDCLAW_HOME="$state/mentions" BIRDCLAW_TRIAGE_AUTH_HOME="$state/auth" "${cli[@]}" init-team-auth-home
 	run_as BIRDCLAW_HOME="$state/mentions" BIRDCLAW_TEST_SEED_DEMO_DATA=0 "${cli[@]}" configure-team-grok-source
@@ -121,9 +124,11 @@ if ! healthy; then
 	exit 1
 fi
 log "healthy: $release_id"
+systemctl enable --now --quiet birdclaw-team-backup.timer
 
 # Keep the newest releases plus whatever is current.
 current="$(readlink -f "$root/current")"
-ls -1dt "$releases"/*/ | sed 's:/$::' | tail -n +$((keep_releases + 1)) | while read -r old; do
+find "$releases" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -printf '%T@ %p\n' |
+	sort -rn | cut -d' ' -f2- | tail -n +$((keep_releases + 1)) | while read -r old; do
 	[[ "$old" == "$current" ]] || rm -rf -- "$old"
 done

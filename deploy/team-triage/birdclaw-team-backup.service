@@ -1,0 +1,9 @@
+[Unit]
+Description=Back up the Birdclaw Team triage store to S3
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/birdclaw-team/current/deploy/team-triage/backup-store.sh
+UMask=0077
+PrivateTmp=yes
+NoNewPrivileges=yes
