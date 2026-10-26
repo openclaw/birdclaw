@@ -33,8 +33,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Require the tag to be on main
+      - name: Require a plain deploy tag on main
         run: |
+          # The tag name reaches a root shell on the host; allow only safe characters.
+          [[ "$GITHUB_REF_NAME" =~ ^deploy-[A-Za-z0-9._-]{1,80}$ ]] || { echo "invalid tag name"; exit 1; }
           git fetch --no-tags origin main
           git merge-base --is-ancestor "$GITHUB_SHA" origin/main
 
@@ -92,6 +94,11 @@ jobs:
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Validate release metadata
+        run: |
+          [[ "$RELEASE_ID" =~ ^deploy-[A-Za-z0-9._-]{1,100}$ ]] || { echo "invalid release id"; exit 1; }
+          [[ "$RELEASE_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo "invalid sha256"; exit 1; }
 
       - name: Upload release to S3
         run: |

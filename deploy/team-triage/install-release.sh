@@ -7,12 +7,12 @@
 # The tarball is the allowlisted npm package (bin/, dist/, package.json) plus
 # production node_modules and deploy/team-triage/. Steps:
 #   1. verify and unpack into /opt/birdclaw-team/releases/<release-id> (read-only)
-#   2. install unit files and the non-secret env file from the release
-#   3. create the proxy token on first install; refresh the xAI key from SSM
-#   4. initialize the dedicated store on first install only
-#   5. point /opt/birdclaw-team/current at the release and restart both services
-#   6. health-check through the identity shim; roll back on failure
-#   7. enable the nightly store backup and prune old releases
+#   2. create the proxy token on first install; refresh the xAI key from SSM
+#   3. initialize the dedicated store on first install only
+#   4. activate the release: its unit files and env, the current symlink, restarts
+#   5. health-check through the identity shim; on failure re-activate the
+#      previous release (including its units and env) and health-check that
+#   6. enable the nightly store backup and prune old releases
 set -euo pipefail
 
 tarball="${1:?release tarball path}"
@@ -29,30 +29,28 @@ keep_releases=5
 log() { echo "[install-release] $*"; }
 
 [[ "$release_id" =~ ^[A-Za-z0-9._-]{1,100}$ ]] || { log "invalid release id"; exit 2; }
+[[ "$expected_sha" =~ ^[0-9a-f]{64}$ ]] || { log "invalid sha256"; exit 2; }
 echo "$expected_sha  $tarball" | sha256sum -c --quiet -
 
-# 1. Unpack into a fresh, root-owned, read-only release directory.
+# 1. Unpack into a fresh, root-owned, read-only release directory. Release ids
+#    include the commit, so an existing directory is the same release and is
+#    reused rather than replaced underneath a running service.
 target="$releases/$release_id"
-staging="$(mktemp -d "$releases/.staging.XXXXXX")"
-trap 'rm -rf "$staging"' EXIT
-tar -xzf "$tarball" -C "$staging"
-chown -R root:root "$staging"
-chmod -R go-w,a+rX "$staging"
-rm -rf "$target"
-mv -T "$staging" "$target"
-trap - EXIT
+if [[ -d "$target" ]]; then
+	log "release $release_id already present; reusing it"
+else
+	staging="$(mktemp -d "$releases/.staging.XXXXXX")"
+	trap 'rm -rf "$staging"' EXIT
+	tar -xzf "$tarball" -C "$staging"
+	chown -R root:root "$staging"
+	chmod -R go-w,a+rX "$staging"
+	mv -T "$staging" "$target"
+	trap - EXIT
+	log "unpacked $release_id"
+fi
 /opt/node/bin/node "$target/bin/birdclaw.mjs" --version >/dev/null
-log "unpacked $release_id"
 
-# 2. Unit files and non-secret configuration come from the release itself.
-install -m 0644 "$target/deploy/team-triage/birdclaw-team.service" /etc/systemd/system/
-install -m 0644 "$target/deploy/team-triage/birdclaw-team-proxy.service" /etc/systemd/system/
-install -m 0644 "$target/deploy/team-triage/birdclaw-team-backup.service" /etc/systemd/system/
-install -m 0644 "$target/deploy/team-triage/birdclaw-team-backup.timer" /etc/systemd/system/
-install -o root -g birdclaw -m 0640 "$target/deploy/team-triage/mcbird.env" "$etc/team-triage.env"
-systemctl daemon-reload
-
-# 3a. Shared proxy token: one copy for the app (birdclaw, 0600) and one env
+# 2a. Shared proxy token: one copy for the app (birdclaw, 0600) and one env
 #     file for the shim (root, 0600, read by systemd before dropping privileges).
 if [[ ! -s "$etc/proxy-token" ]]; then
 	token="$(head -c 48 /dev/urandom | base64 -w0 | tr '+/' '-_' | tr -d '=')"
@@ -64,7 +62,7 @@ if [[ ! -s "$etc/proxy-token" ]]; then
 	log "generated proxy token"
 fi
 
-# 3b. xAI key: SSM Parameter Store is the host's source (1Password is the human
+# 2b. xAI key: SSM Parameter Store is the host's source (1Password is the human
 #     source). A missing parameter keeps whatever secrets.env already holds.
 if key="$(aws ssm get-parameter --region "$region" --name /birdclaw-team/xai-api-key \
 	--with-decryption --query Parameter.Value --output text 2>/dev/null)"; then
@@ -77,7 +75,7 @@ else
 fi
 unset key
 
-# 4. First install only: create the dedicated store, auth HOME marker and Grok
+# 3. First install only: create the dedicated store, auth HOME marker and Grok
 #    source row. These commands refuse to adopt any pre-existing private data.
 if [[ ! -e "$state/mentions/birdclaw.sqlite" ]]; then
 	cli=(/opt/node/bin/node "$target/bin/birdclaw.mjs" --json shared-inbox)
@@ -88,17 +86,22 @@ if [[ ! -e "$state/mentions/birdclaw.sqlite" ]]; then
 	log "initialized dedicated Team store"
 fi
 
-# 5. Atomically switch the current symlink and restart.
-previous="$(readlink -f "$root/current" 2>/dev/null || true)"
-switch_to() {
-	ln -sfn "$1" "$root/.current.new"
-	mv -T "$root/.current.new" "$root/current"
-	systemctl enable --quiet birdclaw-team.service birdclaw-team-proxy.service
-	systemctl restart birdclaw-team.service birdclaw-team-proxy.service
+# 4. Activate a release: install its unit files and non-secret env, switch the
+#    current symlink atomically and restart. Returns non-zero instead of
+#    exiting so a failed activation still reaches the rollback below.
+activate() {
+	local release="$1" dir="$1/deploy/team-triage"
+	install -m 0644 "$dir/birdclaw-team.service" "$dir/birdclaw-team-proxy.service" \
+		"$dir/birdclaw-team-backup.service" "$dir/birdclaw-team-backup.timer" \
+		/etc/systemd/system/ || return 1
+	install -o root -g birdclaw -m 0640 "$dir/mcbird.env" "$etc/team-triage.env" || return 1
+	systemctl daemon-reload || return 1
+	ln -sfn "$release" "$root/.current.new" && mv -T "$root/.current.new" "$root/current" || return 1
+	systemctl enable --quiet birdclaw-team.service birdclaw-team-proxy.service || return 1
+	systemctl restart birdclaw-team.service birdclaw-team-proxy.service || return 1
 }
-switch_to "$target"
 
-# 6. Health: an identified request must reach the app; an unidentified one
+# 5. Health: an identified request must reach the app; an unidentified one
 #    must be refused by the shim.
 healthy() {
 	local code
@@ -114,19 +117,26 @@ healthy() {
 	done
 	return 1
 }
-if ! healthy; then
-	log "health check failed for $release_id"
+
+previous="$(readlink -f "$root/current" 2>/dev/null || true)"
+if ! { activate "$target" && healthy; }; then
+	log "activation or health check failed for $release_id"
 	journalctl -u birdclaw-team.service -u birdclaw-team-proxy.service -n 40 --no-pager || true
-	if [[ -n "$previous" && "$previous" != "$target" ]]; then
-		switch_to "$previous"
-		log "rolled back to $(basename "$previous")"
+	if [[ -n "$previous" && "$previous" != "$target" && -d "$previous" ]]; then
+		if activate "$previous" && healthy; then
+			log "rolled back to $(basename "$previous") (healthy)"
+		else
+			log "ROLLBACK FAILED: $(basename "$previous") is not healthy either; service is down"
+		fi
+	else
+		log "no previous release to roll back to"
 	fi
 	exit 1
 fi
 log "healthy: $release_id"
-systemctl enable --now --quiet birdclaw-team-backup.timer
 
-# Keep the newest releases plus whatever is current.
+# 6. Backups and pruning: keep the newest releases plus whatever is current.
+systemctl enable --now --quiet birdclaw-team-backup.timer
 current="$(readlink -f "$root/current")"
 find "$releases" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -printf '%T@ %p\n' |
 	sort -rn | cut -d' ' -f2- | tail -n +$((keep_releases + 1)) | while read -r old; do
