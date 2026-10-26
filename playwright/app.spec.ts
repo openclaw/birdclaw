@@ -59,7 +59,7 @@ test("navigates across the primary surfaces", async ({ page }) => {
 	await expect(mark).toBeVisible();
 	await expect(mark).toHaveJSProperty("naturalWidth", 256);
 
-	await page.getByRole("link", { name: "Mentions" }).click();
+	await page.getByRole("link", { name: "Mentions", exact: true }).click();
 	await expect(page.getByRole("heading", { name: "Mentions" })).toBeVisible();
 	await expect(
 		page.getByRole("button", { name: "Sync mentions" }),
