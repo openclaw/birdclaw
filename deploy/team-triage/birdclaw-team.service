@@ -1,0 +1,36 @@
+[Unit]
+Description=Birdclaw Team mentions-only triage (loopback :4317)
+Documentation=https://github.com/openclaw/birdclaw/blob/main/deploy/team-triage/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=birdclaw
+Group=birdclaw
+EnvironmentFile=/etc/birdclaw-team/team-triage.env
+EnvironmentFile=-/etc/birdclaw-team/secrets.env
+WorkingDirectory=/opt/birdclaw-team/current
+ExecStart=/opt/birdclaw-team/current/bin/birdclaw-team-triage
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/birdclaw-team
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+MemoryMax=1200M
+
+[Install]
+WantedBy=multi-user.target
