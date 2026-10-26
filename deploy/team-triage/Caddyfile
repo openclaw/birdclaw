@@ -1,0 +1,43 @@
+# Identity shim between cloudflared and Birdclaw Team triage.
+#
+# cloudflared only forwards requests that carry a valid Cloudflare Access JWT
+# for the mcbird Access application (originRequest.access.required), and the
+# Access edge sets Cf-Access-Authenticated-User-Email for the signed-in viewer.
+# This shim converts that identity into the two headers Birdclaw requires,
+# overwriting anything the client sent, and never forwards Access cookies or
+# the JWT to the app.
+{
+	admin off
+	auto_https off
+	persist_config off
+	servers {
+		timeouts {
+			read_header 5s
+			read_body 10s
+			write 90s
+			idle 2m
+		}
+	}
+}
+
+:8080 {
+	bind 127.0.0.1
+
+	request_body {
+		max_size 64KiB
+	}
+
+	@unidentified not header_regexp Cf-Access-Authenticated-User-Email ^[A-Za-z0-9][A-Za-z0-9@._:+-]{0,199}$
+	respond @unidentified "Authenticated Team access is required" 401
+
+	reverse_proxy 127.0.0.1:4317 {
+		header_up -Cookie
+		header_up -Cf-Access-Jwt-Assertion
+		header_up X-Birdclaw-Triage-Token {$BIRDCLAW_TRIAGE_PROXY_TOKEN}
+		header_up X-Birdclaw-Triage-User {http.request.header.Cf-Access-Authenticated-User-Email}
+		transport http {
+			dial_timeout 2s
+			response_header_timeout 75s
+		}
+	}
+}

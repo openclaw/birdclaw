@@ -1,0 +1,33 @@
+[Unit]
+Description=Birdclaw Team identity shim (Caddy, loopback :8080 -> :4317)
+Documentation=https://github.com/openclaw/birdclaw/blob/main/deploy/team-triage/README.md
+After=network-online.target birdclaw-team.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+StateDirectory=birdclaw-team-proxy
+Environment=HOME=/var/lib/birdclaw-team-proxy
+Environment=XDG_DATA_HOME=/var/lib/birdclaw-team-proxy
+Environment=XDG_CONFIG_HOME=/var/lib/birdclaw-team-proxy
+EnvironmentFile=/etc/birdclaw-team/proxy.env
+ExecStart=/usr/bin/caddy run --adapter caddyfile --config /opt/birdclaw-team/current/deploy/team-triage/Caddyfile
+Restart=on-failure
+RestartSec=5
+UMask=0077
+
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+CapabilityBoundingSet=
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target
