@@ -143,10 +143,22 @@ export function ingestTweetPayload(
 			let profileId = profileIdsByAuthor.get(tweet.author_id);
 			if (!profileId) {
 				const author = usersById.get(tweet.author_id);
-				const profile = author
-					? upsertProfileFromXUser(db, author)
-					: ensureStubProfileForXUser(db, tweet.author_id);
-				profileId = profile.profile.id;
+				if (source === "grok") {
+					const match = /^grok-handle:([a-z0-9_]{1,15})$/.exec(tweet.author_id);
+					if (!match || !author || author.username.toLowerCase() !== match[1])
+						throw new Error("Invalid extracted author");
+					// Handle-only extraction is not an authenticated numeric X identity.
+					// A collision with an existing canonical handle fails closed rather than merging identities.
+					db.prepare(
+						"insert into profiles(id,handle,display_name,bio,created_at) values (?,?,?,'Grok-extracted handle; X identity unverified',?) on conflict(id) do nothing",
+					).run(tweet.author_id, "@" + match[1], author.username, observedAt);
+					profileId = tweet.author_id;
+				} else {
+					const profile = author
+						? upsertProfileFromXUser(db, author)
+						: ensureStubProfileForXUser(db, tweet.author_id);
+					profileId = profile.profile.id;
+				}
 				// Keep order-dependent handle-collision reconciliation for ambiguous payloads.
 				if (!conflictingAuthors.has(tweet.author_id)) {
 					profileIdsByAuthor.set(tweet.author_id, profileId);

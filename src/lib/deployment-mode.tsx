@@ -3,7 +3,11 @@ import { createContext, useContext, useMemo, type ReactNode } from "react";
 import { fetchQueryEnvelope } from "./api-client";
 import { queryKeys } from "./query-client";
 
-const DeploymentModeContext = createContext({ readOnly: false, ready: true });
+const DeploymentModeContext = createContext({
+	readOnly: false,
+	ready: true,
+	teamTriage: false,
+});
 
 export function DeploymentModeProvider({ children }: { children: ReactNode }) {
 	const status = useQuery({
@@ -11,8 +15,12 @@ export function DeploymentModeProvider({ children }: { children: ReactNode }) {
 		queryFn: ({ signal }) => fetchQueryEnvelope({ signal }),
 	});
 	const readOnly = status.data?.readOnly === true;
+	const teamTriage = status.data?.teamTriage === true;
 	const ready = status.isSuccess;
-	const value = useMemo(() => ({ readOnly, ready }), [readOnly, ready]);
+	const value = useMemo(
+		() => ({ readOnly, ready, teamTriage }),
+		[readOnly, ready, teamTriage],
+	);
 	return (
 		<DeploymentModeContext.Provider value={value}>
 			{children}

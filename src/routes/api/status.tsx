@@ -1,3 +1,4 @@
+import { isTeamTriage, teamTriageStatusEnvelope } from "#/lib/team-triage";
 import { createFileRoute } from "@tanstack/react-router";
 import { Effect } from "effect";
 import { queryEnvelopeSchema } from "#/lib/api-contracts";
@@ -17,6 +18,10 @@ export const Route = createFileRoute("/api/status")({
 					Effect.gen(function* () {
 						const denied = sensitiveRequestErrorResponse(request);
 						if (denied) return denied;
+						if (isTeamTriage())
+							return jsonResponse(teamTriageStatusEnvelope(), {
+								headers: { "cache-control": "no-store" },
+							});
 
 						requestBackupAutoUpdate();
 						const envelope = yield* getQueryEnvelopeEffect({

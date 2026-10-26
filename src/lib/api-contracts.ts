@@ -242,6 +242,7 @@ export const transportStatusSchema = z.object({
 });
 
 const queryEnvelopeContract = z.object({
+	teamTriage: z.boolean().optional(),
 	readOnly: z.boolean().optional(),
 	accounts: z.array(accountRecordSchema),
 	archives: z.array(archiveCandidateSchema),

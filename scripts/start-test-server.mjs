@@ -32,9 +32,12 @@ const commonEnv = {
 	...withSanitizedNodeOptions(process.env),
 	BIRDCLAW_HOME: resolvedHome,
 	BIRDCLAW_E2E: "1",
+	BIRDCLAW_TEAM_TRIAGE: "0",
 	BIRDCLAW_BACKUP_AUTO_SYNC: "0",
 	BIRDCLAW_DISABLE_LIVE_PROFILE_LOOKUP: "1",
 	BIRDCLAW_DISABLE_LIVE_WRITES: "1",
+	BIRDCLAW_ROBOCLAW_HOOK_URL: "",
+	BIRDCLAW_ROBOCLAW_HOOK_TOKEN: "",
 	DO_NOT_TRACK: "1",
 };
 const seed = spawnSync(

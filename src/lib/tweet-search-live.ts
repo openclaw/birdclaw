@@ -14,11 +14,12 @@ import { runSyncPlanEffect } from "./sync-plan";
 import type { XurlMentionsResponse } from "./types";
 import { ingestTweetPayload } from "./tweet-repository";
 import { mergeTweetPages } from "./tweet-page";
-import { searchRecentTweetsEffect } from "./xurl";
+import { searchRecentTweetsEffect, type PinnedXurlOAuth2Binding } from "./xurl";
 
 export type TweetSearchMode = LiveSyncMode | "local";
 
 export interface SyncTweetSearchOptions {
+	pinnedOAuth2?: PinnedXurlOAuth2Binding;
 	query: string;
 	account?: string;
 	mode?: TweetSearchMode;
@@ -34,7 +35,7 @@ export interface SyncTweetSearchOptions {
 export type SyncTweetSearchResult =
 	| {
 			ok: true;
-			source: "bird" | "xurl" | "bird+xurl" | "cache";
+			source: "bird" | "xurl" | "bird+xurl" | "cache" | "grok";
 			accountId: string;
 			query: string;
 			count: number;
@@ -148,6 +149,7 @@ function fetchBirdSearchEffect({
 
 function fetchXurlSearchEffect({
 	accountId,
+	pinnedOAuth2,
 	query,
 	limit,
 	maxPages,
@@ -156,6 +158,7 @@ function fetchXurlSearchEffect({
 	until,
 }: {
 	accountId: string;
+	pinnedOAuth2?: PinnedXurlOAuth2Binding;
 	query: string;
 	limit: number;
 	maxPages: number;
@@ -175,6 +178,7 @@ function fetchXurlSearchEffect({
 					startTime: since,
 					endTime: until,
 					timeoutMs,
+					...(pinnedOAuth2 ? { pinnedOAuth2 } : {}),
 				}).pipe(
 					Effect.mapError((error) =>
 						savedPages === 0
@@ -221,6 +225,7 @@ function fetchXurlSearchEffect({
 function runModeEffect(
 	mode: Exclude<TweetSearchMode, "auto" | "local">,
 	options: {
+		pinnedOAuth2?: PinnedXurlOAuth2Binding;
 		query: string;
 		accountId: string;
 		username: string;
@@ -235,7 +240,14 @@ function runModeEffect(
 ): Effect.Effect<SyncTweetSearchResult, Error> {
 	return Effect.gen(function* () {
 		const db = getNativeDb();
-		const key = cacheKey({ ...options, mode });
+		const key =
+			cacheKey({ ...options, mode }) +
+			(options.pinnedOAuth2
+				? ":pinned:" +
+					encodeURIComponent(options.pinnedOAuth2.app) +
+					":" +
+					encodeURIComponent(options.pinnedOAuth2.username)
+				: "");
 		const fetch =
 			mode === "bird"
 				? fetchBirdSearchEffect(options).pipe(Effect.mapError(toError))
@@ -326,6 +338,7 @@ function combineTweetSearchResults(
 }
 
 export function syncTweetSearchEffect({
+	pinnedOAuth2,
 	query,
 	account,
 	mode = "auto",
@@ -368,6 +381,7 @@ export function syncTweetSearchEffect({
 		}
 
 		const runOptions = {
+			pinnedOAuth2,
 			query: normalizedQuery,
 			accountId,
 			username: resolvedAccount.username,

@@ -1,3 +1,4 @@
+import { isTeamTriage, teamTriageRequestErrorResponse } from "./team-triage";
 import { Effect } from "effect";
 import { runEffectPromise, tryPromise } from "./effect-runtime";
 import { LOCAL_WEB_PEER_HEADER } from "./local-peer";
@@ -178,6 +179,7 @@ function sameRequestOrigin(request: Request, origin: string, url: URL) {
 }
 
 export function sensitiveRequestErrorResponse(request: Request) {
+	if (isTeamTriage()) return teamTriageRequestErrorResponse(request);
 	const readOnlyDenied = readOnlyRequestErrorResponse(request, true);
 	if (readOnlyDenied) return readOnlyDenied;
 	const url = new URL(request.url);

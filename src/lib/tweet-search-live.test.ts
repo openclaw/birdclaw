@@ -551,4 +551,24 @@ describe("live tweet search sync", () => {
 		});
 		expect(mocks.searchTweetsViaBird).toHaveBeenCalledTimes(1);
 	});
+	it("forwards a dedicated OAuth binding to every recent-search page without changing ordinary account defaults", async () => {
+		mocks.searchRecentTweets
+			.mockResolvedValueOnce(payload(["pinned_page_1"], "next-page"))
+			.mockResolvedValueOnce(payload(["pinned_page_2"]));
+		const { syncTweetSearch } = await import("./tweet-search-live");
+		const binding = { app: "team-read-app", username: "triage_bot" };
+		await syncTweetSearch({
+			query: "@openclaw",
+			mode: "xurl",
+			refresh: true,
+			limit: 100,
+			maxPages: 2,
+			pinnedOAuth2: binding,
+		});
+		expect(mocks.searchRecentTweets).toHaveBeenCalledTimes(2);
+		for (const call of mocks.searchRecentTweets.mock.calls)
+			expect(call[1]).toEqual(
+				expect.objectContaining({ pinnedOAuth2: binding }),
+			);
+	});
 });

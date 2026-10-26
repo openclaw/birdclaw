@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+: "${BIRDCLAW_HOME:?Set a dedicated, initialized mentions-only store directory}"
+: "${BIRDCLAW_TRIAGE_AUTH_HOME:?Set a private dedicated authentication HOME}"
+: "${BIRDCLAW_TRIAGE_PROXY_TOKEN_FILE:?Set the private proxy-token file path}"
+: "${BIRDCLAW_TRIAGE_PUBLIC_ORIGIN:?Set the separate HTTPS application origin}"
+: "${BIRDCLAW_TRIAGE_TEAM_ORIGIN:?Set the HTTPS Team UI origin}"
+if [[ -n "${AUTH_TOKEN:-}" || -n "${CT0:-}" ]]; then
+  echo "Refusing inherited browser session cookies; use a dedicated xurl service login." >&2
+  exit 1
+fi
+export HOME="$BIRDCLAW_TRIAGE_AUTH_HOME"
+export BIRDCLAW_TEAM_TRIAGE=1
+export BIRDCLAW_TEST_SEED_DEMO_DATA=0
+export BIRDCLAW_BACKUP_AUTO_SYNC=0
+export BIRDCLAW_DISABLE_LIVE_WRITES=1
+export BIRDCLAW_DISABLE_LIVE_PROFILE_LOOKUP=1
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "${BIRDCLAW_NODE_BIN:-node}" "$script_dir/birdclaw.mjs" serve --host 127.0.0.1 --port "${PORT:-${BIRDCLAW_PORT:-4317}}"

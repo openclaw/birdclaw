@@ -1,3 +1,4 @@
+import { installSharedInbox } from "./shared-inbox-schema";
 import type { Database } from "./sqlite";
 import type { DatabaseMigration } from "./database-migrations";
 import { installSearchRowIds } from "./search-index";
@@ -1190,5 +1191,10 @@ export const DATABASE_MIGRATIONS: readonly DatabaseMigration[] = [
 		version: 14,
 		name: "track map geometry and display metadata revisions",
 		up: installNetworkMapRevision,
+	},
+	{
+		version: 15,
+		name: "persist shared mentions triage and Roboclaw handoffs",
+		up: installSharedInbox,
 	},
 ];

@@ -571,6 +571,65 @@ describe("xurl transport", () => {
 		]);
 	});
 
+	it("pins dedicated identity and recent search to the same explicit app/account without default-context discovery", async () => {
+		process.env.BIRDCLAW_XURL_OAUTH2_APP = "wrong-default-app";
+		process.env.BIRDCLAW_XURL_OAUTH2_USERNAME = "wrong_default";
+		execFileAsyncMock
+			.mockResolvedValueOnce({
+				stdout: JSON.stringify({ data: { id: "999", username: "triage_bot" } }),
+				stderr: "",
+			})
+			.mockResolvedValueOnce({
+				stdout: JSON.stringify({ data: [] }),
+				stderr: "",
+			});
+		const { lookupPinnedOAuth2UserEffect, searchRecentTweetsEffect } =
+			await import("./xurl");
+		const binding = { app: "team-read-app", username: "triage_bot" };
+		await run(lookupPinnedOAuth2UserEffect(binding, { timeoutMs: 2000 }));
+		await run(
+			searchRecentTweetsEffect("@openclaw", {
+				maxResults: 10,
+				pinnedOAuth2: binding,
+				timeoutMs: 2000,
+			}),
+		);
+		const prefix = [
+			"--app",
+			"team-read-app",
+			"--auth",
+			"oauth2",
+			"--username",
+			"triage_bot",
+		];
+		expect(execFileAsyncMock.mock.calls).toHaveLength(2);
+		expect(execFileAsyncMock.mock.calls[0]?.[1]).toEqual([...prefix, "whoami"]);
+		expect(execFileAsyncMock.mock.calls[1]?.[1].slice(0, 6)).toEqual(prefix);
+		expect(execFileAsyncMock.mock.calls[1]?.[1][6]).toContain(
+			"/2/tweets/search/recent?",
+		);
+	});
+	it("does not discover or retry another OAuth binding when a pinned identity read fails", async () => {
+		execFileAsyncMock.mockRejectedValueOnce(
+			Object.assign(new Error("invalid credential fixture"), {
+				code: 1,
+				stdout: "",
+				stderr: "invalid credential fixture",
+			}),
+		);
+		const { lookupPinnedOAuth2UserEffect } = await import("./xurl");
+		await expect(
+			run(
+				lookupPinnedOAuth2UserEffect(
+					{ app: "team-read-app", username: "triage_bot" },
+					{ timeoutMs: 2000 },
+				),
+			),
+		).rejects.toThrow(/invalid credential fixture/);
+		expect(execFileAsyncMock.mock.calls).toHaveLength(1);
+		expect(execFileAsyncMock.mock.calls[0]?.[1]).toContain("whoami");
+	});
+
 	it("ignores configured OAuth2 overrides for recent search reads", async () => {
 		process.env.BIRDCLAW_XURL_OAUTH2_APP = "xurl-steipete";
 		process.env.BIRDCLAW_XURL_OAUTH2_USERNAME = "openclaw";

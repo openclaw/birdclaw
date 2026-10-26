@@ -1208,30 +1208,58 @@ export const searchRecentByConversationIdEffect = Effect.fn(
 	return command.pipe(Effect.map(toXurlTweetsResponse));
 });
 
-export const searchRecentTweetsEffect = Effect.fn("xurl.searchRecentTweets")(
-	(
-		searchQuery: string,
-		options: PageOptions & {
-			startTime?: string;
-			endTime?: string;
-			timeoutMs?: number;
-		},
-	): Effect.Effect<XurlTweetsResponse, Error> =>
-		runOAuth2JsonCommandEffect({
-			args: queryArgs("/2/tweets/search/recent", {
-				...tweetQuery(
-					{ query: searchQuery, max_results: options.maxResults },
-					THREAD_TWEET_FIELDS,
-				),
-				pagination_token: options.paginationToken || undefined,
-				start_time: options.startTime || undefined,
-				end_time: options.endTime || undefined,
-			}),
-			username: options.username,
-			options: { timeoutMs: options.timeoutMs },
-			useConfiguredCandidate: false,
-		}).pipe(Effect.map(toXurlTweetsResponse)),
+export interface PinnedXurlOAuth2Binding {
+	app: string;
+	username: string;
+}
+function pinnedOAuthArgs(binding: PinnedXurlOAuth2Binding, args: string[]) {
+	if (
+		!/^[A-Za-z0-9_.-]{1,100}$/.test(binding.app) ||
+		!/^[A-Za-z0-9_]{1,15}$/.test(binding.username)
+	)
+		throw new Error("An explicit xurl app and account binding is required");
+	return oauth2ArgsForCandidate(binding, args);
+}
+/** Dedicated-service reads never enumerate or fall back to another app/default identity. */
+export const lookupPinnedOAuth2UserEffect = Effect.fn(
+	"xurl.lookupPinnedOAuth2User",
+)((binding: PinnedXurlOAuth2Binding, options: JsonCommandOptions) =>
+	runJsonCommandEffect(pinnedOAuthArgs(binding, ["whoami"]), options).pipe(
+		Effect.map(authenticatedUserFromPayload),
+	),
 );
+
+export const searchRecentTweetsEffect = Effect.fn("xurl.searchRecentTweets")((
+	searchQuery: string,
+	options: PageOptions & {
+		startTime?: string;
+		endTime?: string;
+		timeoutMs?: number;
+		pinnedOAuth2?: PinnedXurlOAuth2Binding;
+	},
+): Effect.Effect<XurlTweetsResponse, Error> => {
+	const args = queryArgs("/2/tweets/search/recent", {
+		...tweetQuery(
+			{ query: searchQuery, max_results: options.maxResults },
+			THREAD_TWEET_FIELDS,
+		),
+		pagination_token: options.paginationToken || undefined,
+		start_time: options.startTime || undefined,
+		end_time: options.endTime || undefined,
+	});
+	return (
+		options.pinnedOAuth2
+			? runJsonCommandEffect(pinnedOAuthArgs(options.pinnedOAuth2, args), {
+					timeoutMs: options.timeoutMs,
+				})
+			: runOAuth2JsonCommandEffect({
+					args,
+					username: options.username,
+					options: { timeoutMs: options.timeoutMs },
+					useConfiguredCandidate: false,
+				})
+	).pipe(Effect.map(toXurlTweetsResponse));
+});
 
 export const getTweetByIdEffect = Effect.fn("xurl.getTweetById")(
 	(

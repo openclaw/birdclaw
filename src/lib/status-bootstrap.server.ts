@@ -1,3 +1,8 @@
+import {
+	isTeamTriage,
+	teamTriageStatusEnvelope,
+	teamTriageRequestErrorResponse,
+} from "./team-triage";
 import { Effect } from "effect";
 import { queryEnvelopeSchema } from "./api-contracts";
 import { isReadOnlyDeployment } from "./config";
@@ -8,6 +13,12 @@ import { getQueryEnvelopeEffect } from "./query-status";
 
 /** Optional HTML bootstrap must have the same authority as the status API. */
 export function readStatusBootstrap(request: Request) {
+	if (isTeamTriage())
+		return Promise.resolve(
+			teamTriageRequestErrorResponse(request)
+				? null
+				: teamTriageStatusEnvelope(),
+		);
 	if (!isReadOnlyDeployment()) return Promise.resolve(null);
 	const statusUrl = new URL(request.url);
 	statusUrl.pathname = "/api/status";

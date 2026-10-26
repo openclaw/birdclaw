@@ -1,3 +1,4 @@
+import { isTeamTriage } from "#/lib/team-triage";
 import { requestBackupAutoUpdate } from "#/lib/backup";
 import { printError, type CliCommandContext } from "./command-context";
 
@@ -40,7 +41,9 @@ export function registerServeCommand(
 				port,
 				serverVersion,
 				json: asJson(),
-				onListening: () => requestBackupAutoUpdate(),
+				onListening: () => {
+					if (!isTeamTriage()) requestBackupAutoUpdate();
+				},
 			});
 		});
 }

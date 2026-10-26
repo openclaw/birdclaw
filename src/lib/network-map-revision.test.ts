@@ -33,7 +33,7 @@ describe("network map revisions", () => {
 	it("upgrades v13 without changing canonical content and preserves counters on repeated initialization", () => {
 		const db = fixture(13);
 		const data = db.prepare("select * from profiles order by id").all();
-		expect(runDatabaseMigrations(db, DATABASE_MIGRATIONS)).toBe(14);
+		expect(runDatabaseMigrations(db, DATABASE_MIGRATIONS)).toBe(15);
 		expect(revision(db)).toEqual({ geometry: 0, details: 0 });
 		expect(db.prepare("select * from profiles order by id").all()).toEqual(
 			data,

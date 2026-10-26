@@ -22,6 +22,7 @@ import { Route as MentionsRouteImport } from './routes/mentions'
 import { Route as NetworkMapRouteImport } from './routes/network-map'
 import { Route as ProfileAnalyzeRouteImport } from './routes/profile-analyze'
 import { Route as RateLimitsRouteImport } from './routes/rate-limits'
+import { Route as SharedInboxRouteImport } from './routes/shared-inbox'
 import { Route as TodayRouteImport } from './routes/today'
 import { Route as ApiActionRouteImport } from './routes/api/action'
 import { Route as ApiAvatarRouteImport } from './routes/api/avatar'
@@ -37,6 +38,7 @@ import { Route as ApiProfileAnalysisRouteImport } from './routes/api/profile-ana
 import { Route as ApiProfileHydrateRouteImport } from './routes/api/profile-hydrate'
 import { Route as ApiQueryRouteImport } from './routes/api/query'
 import { Route as ApiSearchDiscussionRouteImport } from './routes/api/search-discussion'
+import { Route as ApiSharedInboxRouteImport } from './routes/api/shared-inbox'
 import { Route as ApiStatusRouteImport } from './routes/api/status'
 import { Route as ApiSyncRouteImport } from './routes/api/sync'
 import { Route as ApiXurlRateLimitsRouteImport } from './routes/api/xurl-rate-limits'
@@ -106,6 +108,11 @@ const ProfileAnalyzeRoute = ProfileAnalyzeRouteImport.update({
 const RateLimitsRoute = RateLimitsRouteImport.update({
   id: '/rate-limits',
   path: '/rate-limits',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SharedInboxRoute = SharedInboxRouteImport.update({
+  id: '/shared-inbox',
+  path: '/shared-inbox',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TodayRoute = TodayRouteImport.update({
@@ -183,6 +190,11 @@ const ApiSearchDiscussionRoute = ApiSearchDiscussionRouteImport.update({
   path: '/api/search-discussion',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSharedInboxRoute = ApiSharedInboxRouteImport.update({
+  id: '/api/shared-inbox',
+  path: '/api/shared-inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiStatusRoute = ApiStatusRouteImport.update({
   id: '/api/status',
   path: '/api/status',
@@ -223,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/network-map': typeof NetworkMapRoute
   '/profile-analyze': typeof ProfileAnalyzeRoute
   '/rate-limits': typeof RateLimitsRoute
+  '/shared-inbox': typeof SharedInboxRoute
   '/today': typeof TodayRoute
   '/api/action': typeof ApiActionRoute
   '/api/avatar': typeof ApiAvatarRoute
@@ -238,6 +251,7 @@ export interface FileRoutesByFullPath {
   '/api/profile-hydrate': typeof ApiProfileHydrateRoute
   '/api/query': typeof ApiQueryRoute
   '/api/search-discussion': typeof ApiSearchDiscussionRoute
+  '/api/shared-inbox': typeof ApiSharedInboxRoute
   '/api/status': typeof ApiStatusRoute
   '/api/sync': typeof ApiSyncRoute
   '/api/xurl-rate-limits': typeof ApiXurlRateLimitsRoute
@@ -258,6 +272,7 @@ export interface FileRoutesByTo {
   '/network-map': typeof NetworkMapRoute
   '/profile-analyze': typeof ProfileAnalyzeRoute
   '/rate-limits': typeof RateLimitsRoute
+  '/shared-inbox': typeof SharedInboxRoute
   '/today': typeof TodayRoute
   '/api/action': typeof ApiActionRoute
   '/api/avatar': typeof ApiAvatarRoute
@@ -273,6 +288,7 @@ export interface FileRoutesByTo {
   '/api/profile-hydrate': typeof ApiProfileHydrateRoute
   '/api/query': typeof ApiQueryRoute
   '/api/search-discussion': typeof ApiSearchDiscussionRoute
+  '/api/shared-inbox': typeof ApiSharedInboxRoute
   '/api/status': typeof ApiStatusRoute
   '/api/sync': typeof ApiSyncRoute
   '/api/xurl-rate-limits': typeof ApiXurlRateLimitsRoute
@@ -294,6 +310,7 @@ export interface FileRoutesById {
   '/network-map': typeof NetworkMapRoute
   '/profile-analyze': typeof ProfileAnalyzeRoute
   '/rate-limits': typeof RateLimitsRoute
+  '/shared-inbox': typeof SharedInboxRoute
   '/today': typeof TodayRoute
   '/api/action': typeof ApiActionRoute
   '/api/avatar': typeof ApiAvatarRoute
@@ -309,6 +326,7 @@ export interface FileRoutesById {
   '/api/profile-hydrate': typeof ApiProfileHydrateRoute
   '/api/query': typeof ApiQueryRoute
   '/api/search-discussion': typeof ApiSearchDiscussionRoute
+  '/api/shared-inbox': typeof ApiSharedInboxRoute
   '/api/status': typeof ApiStatusRoute
   '/api/sync': typeof ApiSyncRoute
   '/api/xurl-rate-limits': typeof ApiXurlRateLimitsRoute
@@ -331,6 +349,7 @@ export interface FileRouteTypes {
     | '/network-map'
     | '/profile-analyze'
     | '/rate-limits'
+    | '/shared-inbox'
     | '/today'
     | '/api/action'
     | '/api/avatar'
@@ -346,6 +365,7 @@ export interface FileRouteTypes {
     | '/api/profile-hydrate'
     | '/api/query'
     | '/api/search-discussion'
+    | '/api/shared-inbox'
     | '/api/status'
     | '/api/sync'
     | '/api/xurl-rate-limits'
@@ -366,6 +386,7 @@ export interface FileRouteTypes {
     | '/network-map'
     | '/profile-analyze'
     | '/rate-limits'
+    | '/shared-inbox'
     | '/today'
     | '/api/action'
     | '/api/avatar'
@@ -381,6 +402,7 @@ export interface FileRouteTypes {
     | '/api/profile-hydrate'
     | '/api/query'
     | '/api/search-discussion'
+    | '/api/shared-inbox'
     | '/api/status'
     | '/api/sync'
     | '/api/xurl-rate-limits'
@@ -401,6 +423,7 @@ export interface FileRouteTypes {
     | '/network-map'
     | '/profile-analyze'
     | '/rate-limits'
+    | '/shared-inbox'
     | '/today'
     | '/api/action'
     | '/api/avatar'
@@ -416,6 +439,7 @@ export interface FileRouteTypes {
     | '/api/profile-hydrate'
     | '/api/query'
     | '/api/search-discussion'
+    | '/api/shared-inbox'
     | '/api/status'
     | '/api/sync'
     | '/api/xurl-rate-limits'
@@ -437,6 +461,7 @@ export interface RootRouteChildren {
   NetworkMapRoute: typeof NetworkMapRoute
   ProfileAnalyzeRoute: typeof ProfileAnalyzeRoute
   RateLimitsRoute: typeof RateLimitsRoute
+  SharedInboxRoute: typeof SharedInboxRoute
   TodayRoute: typeof TodayRoute
   ApiActionRoute: typeof ApiActionRoute
   ApiAvatarRoute: typeof ApiAvatarRoute
@@ -452,6 +477,7 @@ export interface RootRouteChildren {
   ApiProfileHydrateRoute: typeof ApiProfileHydrateRoute
   ApiQueryRoute: typeof ApiQueryRoute
   ApiSearchDiscussionRoute: typeof ApiSearchDiscussionRoute
+  ApiSharedInboxRoute: typeof ApiSharedInboxRoute
   ApiStatusRoute: typeof ApiStatusRoute
   ApiSyncRoute: typeof ApiSyncRoute
   ApiXurlRateLimitsRoute: typeof ApiXurlRateLimitsRoute
@@ -550,6 +576,13 @@ declare module '@tanstack/react-router' {
       path: '/rate-limits'
       fullPath: '/rate-limits'
       preLoaderRoute: typeof RateLimitsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shared-inbox': {
+      id: '/shared-inbox'
+      path: '/shared-inbox'
+      fullPath: '/shared-inbox'
+      preLoaderRoute: typeof SharedInboxRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/today': {
@@ -657,6 +690,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSearchDiscussionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/shared-inbox': {
+      id: '/api/shared-inbox'
+      path: '/api/shared-inbox'
+      fullPath: '/api/shared-inbox'
+      preLoaderRoute: typeof ApiSharedInboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/status': {
       id: '/api/status'
       path: '/api/status'
@@ -709,6 +749,7 @@ const rootRouteChildren: RootRouteChildren = {
   NetworkMapRoute: NetworkMapRoute,
   ProfileAnalyzeRoute: ProfileAnalyzeRoute,
   RateLimitsRoute: RateLimitsRoute,
+  SharedInboxRoute: SharedInboxRoute,
   TodayRoute: TodayRoute,
   ApiActionRoute: ApiActionRoute,
   ApiAvatarRoute: ApiAvatarRoute,
@@ -724,6 +765,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiProfileHydrateRoute: ApiProfileHydrateRoute,
   ApiQueryRoute: ApiQueryRoute,
   ApiSearchDiscussionRoute: ApiSearchDiscussionRoute,
+  ApiSharedInboxRoute: ApiSharedInboxRoute,
   ApiStatusRoute: ApiStatusRoute,
   ApiSyncRoute: ApiSyncRoute,
   ApiXurlRateLimitsRoute: ApiXurlRateLimitsRoute,

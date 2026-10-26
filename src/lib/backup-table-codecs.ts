@@ -32,6 +32,50 @@ export interface BackupTableCodec<
 	name: Name;
 }
 
+/** A restored pending replica must never erase evidence that a handoff was dispatched. */
+function sharedHandoffMergeValue(column: string) {
+	const table = "shared_inbox_handoffs";
+	const rank = (scope: string) =>
+		"case " +
+		scope +
+		".status when 'pending' then 0 when 'sending' then 1 when 'failed' then 2 when 'uncertain' then 3 else 4 end";
+	const incoming = rank("excluded");
+	const stored = rank(table);
+	const choose =
+		"excluded.idempotency_key = " +
+		table +
+		".idempotency_key and (" +
+		incoming +
+		" > " +
+		stored +
+		" or (" +
+		incoming +
+		" = " +
+		stored +
+		" and excluded.updated_at > " +
+		table +
+		".updated_at))";
+	const conflict =
+		column === "status"
+			? "when excluded.idempotency_key != " +
+				table +
+				".idempotency_key then 'uncertain' "
+			: "";
+	return (
+		"case " +
+		conflict +
+		"when " +
+		choose +
+		" then excluded." +
+		column +
+		" else " +
+		table +
+		"." +
+		column +
+		" end"
+	);
+}
+
 const BACKUP_SHARD_PART_PATTERN = /\.part-\d{4,}\.jsonl$/u;
 
 export function logicalBackupShardPath(relativePath: string) {
@@ -828,6 +872,51 @@ const definitions = {
 			conflictKey: "(account_id, profile_id)",
 		},
 	}),
+	shared_inbox_settings: defineTable("shared_inbox_settings", {
+		columns: {
+			id: null,
+			settings_json:
+				"case when excluded.updated_at > shared_inbox_settings.updated_at then excluded.settings_json else shared_inbox_settings.settings_json end",
+			updated_at:
+				"case when excluded.updated_at > shared_inbox_settings.updated_at then excluded.updated_at else shared_inbox_settings.updated_at end",
+		},
+		orderBy: "id",
+		...fixedShard("data/shared-inbox/settings.jsonl", "shared_inbox_settings"),
+		merge: { order: 28, conflictKey: "(id)" },
+	}),
+	shared_inbox_state: defineTable("shared_inbox_state", {
+		columns: {
+			tweet_id: null,
+			read_at:
+				"case when excluded.updated_at > shared_inbox_state.updated_at then excluded.read_at else shared_inbox_state.read_at end",
+			handled_at:
+				"case when excluded.updated_at > shared_inbox_state.updated_at then excluded.handled_at else shared_inbox_state.handled_at end",
+			classification:
+				"case when excluded.updated_at > shared_inbox_state.updated_at then excluded.classification else shared_inbox_state.classification end",
+			updated_at:
+				"case when excluded.updated_at > shared_inbox_state.updated_at then excluded.updated_at else shared_inbox_state.updated_at end",
+		},
+		orderBy: "tweet_id",
+		...fixedShard("data/shared-inbox/state.jsonl", "shared_inbox_state"),
+		merge: { order: 29, conflictKey: "(tweet_id)" },
+	}),
+	shared_inbox_handoffs: defineTable("shared_inbox_handoffs", {
+		columns: {
+			tweet_id: null,
+			idempotency_key: sharedHandoffMergeValue("idempotency_key"),
+			payload_json: sharedHandoffMergeValue("payload_json"),
+			classification: sharedHandoffMergeValue("classification"),
+			status: sharedHandoffMergeValue("status"),
+			run_id: sharedHandoffMergeValue("run_id"),
+			error: sharedHandoffMergeValue("error"),
+			created_at: sharedHandoffMergeValue("created_at"),
+			updated_at: sharedHandoffMergeValue("updated_at"),
+		},
+		orderBy: "tweet_id",
+		...fixedShard("data/shared-inbox/handoffs.jsonl", "shared_inbox_handoffs"),
+		merge: { order: 30, conflictKey: "(tweet_id)" },
+	}),
+
 	tweet_actions: defineTable("tweet_actions", {
 		columns: {
 			id: null,

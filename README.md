@@ -80,6 +80,10 @@ Bird is optional: xurl supports ordinary live workflows and moderation, while na
 
 For an archive-only server, set `BIRDCLAW_DEPLOYMENT_READ_ONLY=1` before `birdclaw serve`. This opt-in mode serves an initialized archive through strict readers, disables web mutations and automatic sync, and hides unavailable controls. See [read-only archive deployments](https://birdclaw.sh/configuration.html#read-only-archive-deployments) for its authentication and storage requirements.
 
+## Shared mentions triage
+
+The [shared mentions inbox](docs/shared-inbox.md) unifies cached OpenClaw and Peter mentions across accounts, with durable unread/read and handled state, bounded Open on X batches, filters, and tracked bug/feature handoffs to an explicitly configured Roboclaw agent hook. Open **Shared mentions** in the web app or use `birdclaw --json shared-inbox list`. No background X search or automatic posting is enabled. For a separately authenticated shared service, see the [mentions-only Team deployment contract](docs/team-triage-deployment.md); never expose a personal archive through the remote-web bypass.
+
 ## Configuration
 
 `~/.birdclaw/config.json` selects default accounts, transport preferences, mention sources, and backup behavior. Command flags override environment variables, which override the config file.

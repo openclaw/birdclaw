@@ -354,3 +354,74 @@ html.theme-transition::view-transition-new(theme-toggle) {
 		text-decoration: underline;
 	}
 }
+
+/* Shared mentions: durable team triage, separate from the account-ranked inbox. */
+.shared-inbox { color: var(--ink); }
+.shared-inbox-header { padding: 24px 18px 16px; border-bottom: 1px solid var(--line); }
+.shared-inbox-eyebrow { display:flex; align-items:center; gap:7px; font-size:10px; letter-spacing:.13em; font-weight:700; color:var(--ink-soft); margin-bottom:10px; }
+.shared-inbox h1 { font-size:27px; line-height:1.2; font-weight:800; letter-spacing:-.04em; }
+.shared-inbox-header > p { font-size:13px; color:var(--ink-soft); margin-top:7px; }
+.shared-inbox-stats { display:flex; gap:22px; margin:20px 0; font-size:12px; color:var(--ink-soft); }
+.shared-inbox-stats strong { font-size:22px; margin-right:4px; color:var(--ink); letter-spacing:-.04em; }
+.shared-inbox-toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.shared-inbox button, .shared-inbox a { cursor:pointer; }
+.shared-inbox button:disabled { opacity:.45; cursor:not-allowed; }
+.shared-inbox .shared-inbox-help { font-size:11px; line-height:1.5; margin-top:11px; }
+.shared-inbox-filters { padding:0 18px 16px; border-bottom:1px solid var(--line); }
+.shared-inbox-targets { display:flex; gap:20px; margin-bottom:16px; }
+.shared-inbox-targets button { padding:14px 1px 10px; font-size:13px; color:var(--ink-soft); border-bottom:3px solid transparent; }
+.shared-inbox-targets button[aria-pressed="true"] { color:var(--ink); font-weight:700; border-color:var(--accent); }
+.shared-inbox-search { display:block; }
+.shared-inbox-selects { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:14px; }
+.shared-inbox label { display:flex; flex-direction:column; gap:5px; font-size:11px; font-weight:600; color:var(--ink-soft); }
+.shared-inbox select, .shared-inbox textarea { min-width:0; padding:9px 8px; color:var(--ink); background:var(--bg); border:1px solid var(--line-strong); border-radius:9px; font-size:12px; font-weight:400; }
+.shared-inbox textarea { resize:vertical; width:100%; font:inherit; font-weight:400; font-size:13px; line-height:1.5; }
+.shared-inbox-integration { padding:12px 18px; display:flex; align-items:baseline; gap:8px; font-size:11px; line-height:1.5; color:var(--ink-soft); background:var(--bg-hover); border-bottom:1px solid var(--line); }
+.shared-inbox-dot { flex-shrink:0; width:6px; height:6px; border-radius:50%; background:#a66a00; }
+.shared-inbox-dot.connected { background:#16834b; }
+.shared-inbox-notice, .shared-inbox-error { padding:12px 18px; font-size:12px; line-height:1.6; background:var(--accent-soft); border-bottom:1px solid var(--line); }
+.shared-inbox-error { color:var(--alert); background:var(--alert-soft); }
+.shared-inbox-error button { display:block; margin-top:8px; }
+.shared-inbox-card { padding:18px; border-bottom:1px solid var(--line); border-left:3px solid var(--accent); }
+.shared-inbox-card.is-read { border-left-color:transparent; }
+.shared-inbox-card-top { display:flex; align-items:center; gap:10px; }
+.shared-inbox-avatar { width:34px; height:34px; background:var(--accent-soft); color:var(--accent); border-radius:50%; display:grid; place-items:center; flex-shrink:0; font-size:11px; font-weight:800; }
+.shared-inbox-author { min-width:0; display:flex; flex-direction:column; gap:2px; }
+.shared-inbox-author strong { font-size:13px; }
+.shared-inbox-author > span { font-size:11px; color:var(--ink-soft); overflow-wrap:anywhere; }
+.shared-inbox-reading { margin-left:auto; font-size:10px; color:var(--ink-soft); display:flex; align-items:center; gap:4px; white-space:nowrap; }
+.shared-inbox-reading.unread { color:var(--accent); font-weight:700; }
+.shared-inbox-badges { display:flex; gap:6px; margin:12px 0 8px; flex-wrap:wrap; }
+.shared-inbox-badges > span { background:var(--bg-active); color:var(--ink-soft); border-radius:5px; padding:3px 6px; font-size:10px; display:flex; align-items:center; gap:3px; }
+.shared-inbox-tweet { font-size:14px; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
+.shared-inbox-card-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:14px; }
+.shared-inbox-card-actions button, .shared-inbox-card-actions a { font-size:11px; padding:6px 9px; }
+.shared-inbox-handoff { padding:10px 12px; margin-top:13px; border:1px solid var(--line-strong); border-radius:8px; background:var(--bg-hover); font-size:11px; line-height:1.5; display:flex; flex-direction:column; gap:4px; overflow-wrap:anywhere; }
+.shared-inbox-handoff strong { font-size:11px; font-weight:600; }
+.shared-inbox-handoff span { color:var(--ink-soft); }
+.shared-inbox-empty { padding:40px 24px; font-size:13px; line-height:1.7; text-align:center; color:var(--ink-soft); }
+.shared-inbox-empty svg { margin:0 auto 12px; }
+.shared-inbox-empty h2 { color:var(--ink); font-size:16px; font-weight:700; margin-bottom:8px; }
+.shared-inbox-pagination { padding:16px 18px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:11px; color:var(--ink-soft); }
+.shared-inbox-pagination span { flex:1; min-width:160px; }
+.shared-inbox-modal-backdrop { position:fixed; inset:0; background:rgb(0 0 0 / 38%); z-index:80; display:grid; place-items:center; padding:16px; }
+.shared-inbox-modal { width:min(100%,520px); max-height:90dvh; overflow-y:auto; background:var(--bg); padding:24px; border-radius:18px; box-shadow:0 15px 80px var(--shadow-strong); }
+.shared-inbox-modal h2 { font-size:21px; font-weight:800; margin-bottom:10px; }
+.shared-inbox-modal p { font-size:12px; color:var(--ink-soft); line-height:1.6; margin:10px 0; }
+.shared-inbox-modal form { display:flex; flex-direction:column; gap:14px; }
+.shared-inbox-modal blockquote { font-size:13px; line-height:1.5; border-left:3px solid var(--accent); margin:16px 0; padding-left:12px; max-height:180px; overflow-y:auto; }
+@media (max-width:520px) {
+ .shared-inbox-header { padding-top:18px; }
+ .shared-inbox h1 { font-size:24px; }
+ .shared-inbox-stats { gap:14px; }
+ .shared-inbox-stats strong { font-size:19px; }
+ .shared-inbox-selects { grid-template-columns:minmax(0,1fr); }
+ .shared-inbox-header,.shared-inbox-filters,.shared-inbox-card { padding-left:12px; padding-right:12px; }
+}
+
+.shared-inbox-dialog { border:0; padding:0; margin:auto; background:transparent; color:var(--ink); width:min(calc(100% - 32px),520px); max-height:90dvh; }
+.shared-inbox-dialog::backdrop { background:rgb(0 0 0 / 38%); }
+
+.shared-inbox-coverage { padding:14px 18px; background:var(--accent-soft); border-bottom:1px solid var(--line); font-size:11px; line-height:1.7; color:var(--ink-soft); }
+.shared-inbox-coverage strong { color:var(--ink); font-weight:700; }
+.shared-inbox-coverage button { margin-top:8px; }

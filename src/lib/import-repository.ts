@@ -75,6 +75,9 @@ export class ImportRepository {
       delete from follow_edges;
       delete from follow_snapshot_members;
       delete from follow_snapshots;
+      delete from shared_inbox_handoffs;
+      delete from shared_inbox_state;
+      delete from shared_inbox_settings;
       delete from ai_scores;
       delete from tweet_actions;
       delete from tweet_account_edges;

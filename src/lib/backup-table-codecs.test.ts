@@ -13,7 +13,7 @@ import {
 describe("backup table codecs", () => {
 	it("owns every portable table and path exactly once", () => {
 		expect(assertBackupTableCodecRegistry()).toBe(true);
-		expect(BACKUP_TABLE_CODECS).toHaveLength(28);
+		expect(BACKUP_TABLE_CODECS).toHaveLength(31);
 		expect(BACKUP_TABLE_CODECS.map((codec) => codec.name)).toEqual([
 			"accounts",
 			"profiles",
@@ -37,6 +37,9 @@ describe("backup table codecs", () => {
 			"link_occurrences",
 			"blocks",
 			"mutes",
+			"shared_inbox_settings",
+			"shared_inbox_state",
+			"shared_inbox_handoffs",
 			"tweet_actions",
 			"ai_scores",
 			"follow_snapshots",
@@ -48,7 +51,7 @@ describe("backup table codecs", () => {
 			BACKUP_TABLE_CODECS.map((codec) => codec.merge.order).sort(
 				(left, right) => left - right,
 			),
-		).toEqual(Array.from({ length: 28 }, (_, index) => index));
+		).toEqual(Array.from({ length: 31 }, (_, index) => index));
 		const mergeOrder = new Map(
 			BACKUP_TABLE_CODECS.map((codec) => [codec.name, codec.merge.order]),
 		);

@@ -1,3 +1,11 @@
+import {
+	assertTeamTriageAuthHome,
+	isTeamTriage,
+	readTeamTriageConfig,
+	teamTriageRequestErrorResponse,
+} from "./team-triage";
+import { assertTeamTriageStore } from "./team-triage-store";
+import { recoverSharedInboxCoverage } from "./shared-inbox-sync";
 import { createReadStream } from "node:fs";
 import { stat } from "node:fs/promises";
 import {
@@ -293,8 +301,21 @@ export async function startProductionServer({
 	mcpResponseTimeoutMs = DEFAULT_MCP_RESPONSE_TIMEOUT_MS,
 }: ProductionServerOptions) {
 	process.env.BIRDCLAW_LOCAL_WEB = "socket";
-	const mcpRuntime =
-		injectedMcpRuntime === undefined
+	if (isTeamTriage()) {
+		if (!["127.0.0.1", "::1"].includes(host))
+			throw new Error(
+				"Team triage may bind only to loopback behind the authenticated proxy",
+			);
+		readTeamTriageConfig();
+		assertTeamTriageAuthHome();
+		assertTeamTriageStore();
+		process.env.BIRDCLAW_DISABLE_LIVE_WRITES = "1";
+		process.env.BIRDCLAW_DISABLE_LIVE_PROFILE_LOOKUP = "1";
+		recoverSharedInboxCoverage();
+	}
+	const mcpRuntime = isTeamTriage()
+		? null
+		: injectedMcpRuntime === undefined
 			? prepareBirdclawMcpRuntime(serverVersion)
 			: injectedMcpRuntime;
 	const loaded = (await import(pathToFileURL(serverEntry).href)) as {
@@ -317,6 +338,33 @@ export async function startProductionServer({
 		async (request, response) => {
 			try {
 				const { rawTarget, url } = parseIncomingUrl(request);
+				if (isTeamTriage()) {
+					response.setHeader("Referrer-Policy", "no-referrer");
+					response.setHeader("X-Content-Type-Options", "nosniff");
+					response.setHeader(
+						"Content-Security-Policy",
+						"frame-ancestors 'self' " +
+							readTeamTriageConfig().teamOrigin +
+							"; object-src 'none'; base-uri 'self'",
+					);
+					const teamDenied = teamTriageRequestErrorResponse(
+						new Request(url, {
+							method: request.method ?? "GET",
+							headers: requestHeaders(request),
+						}),
+					);
+					if (teamDenied) {
+						request.resume();
+						await sendWebResponse(teamDenied, response);
+						return;
+					}
+					response.setHeader("cache-control", "no-store");
+					if (url.pathname === "/") {
+						request.resume();
+						response.writeHead(302, { location: "/shared-inbox" }).end();
+						return;
+					}
+				}
 				const isExactMcpTarget = rawTarget === "/mcp";
 				const isMcpNamespace = hasMcpPathPrefix(rawTarget, url);
 				const isReservedMcpHost = hasReservedMcpHostname(url, mcpRuntime);

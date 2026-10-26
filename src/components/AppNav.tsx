@@ -41,6 +41,7 @@ import { READ_ONLY_ARCHIVE_PAGES } from "#/lib/api-enums";
 import { useDeploymentMode } from "#/lib/deployment-mode";
 
 const links = [
+	{ to: "/shared-inbox", label: "Shared mentions", icon: Inbox },
 	{ to: "/inbox", label: "Inbox", icon: Inbox },
 	{ to: "/today", label: "Today", icon: CalendarDays },
 	{ to: "/discuss", label: "Discuss", icon: MessagesSquare },
@@ -58,7 +59,7 @@ const links = [
 ] as const;
 
 export function AppNav({ compact = false }: { compact?: boolean }) {
-	const { readOnly } = useDeploymentMode();
+	const { readOnly, teamTriage } = useDeploymentMode();
 	const pathname = useRouterState({
 		select: (state) => state.location.pathname,
 	});
@@ -66,7 +67,10 @@ export function AppNav({ compact = false }: { compact?: boolean }) {
 	return (
 		<aside className={compact ? sidebarShellCompactClass : sidebarShellClass}>
 			<div className="flex flex-col">
-				<Link to="/" className={sidebarBrandClass}>
+				<Link
+					to={teamTriage ? "/shared-inbox" : "/"}
+					className={sidebarBrandClass}
+				>
 					<span className={sidebarBrandMarkClass}>
 						<BirdclawMark className="size-10" />
 					</span>
@@ -77,14 +81,20 @@ export function AppNav({ compact = false }: { compact?: boolean }) {
 					>
 						<span className={sidebarBrandTitleClass}>birdclaw</span>
 						<span className={sidebarBrandTaglineClass}>
-							{readOnly ? "Read-only archive" : "Fast search for your archive."}
+							{teamTriage
+								? "Team mentions-only triage"
+								: readOnly
+									? "Read-only archive"
+									: "Fast search for your archive."}
 						</span>
 					</span>
 				</Link>
 				<nav className={sidebarNavClass} aria-label="Primary">
 					{links
-						.filter(
-							(link) => !readOnly || READ_ONLY_ARCHIVE_PAGES.includes(link.to),
+						.filter((link) =>
+							teamTriage
+								? link.to === "/shared-inbox"
+								: !readOnly || READ_ONLY_ARCHIVE_PAGES.includes(link.to),
 						)
 						.map((link) => {
 							const active = pathname === link.to;
@@ -118,7 +128,11 @@ export function AppNav({ compact = false }: { compact?: boolean }) {
 				</nav>
 			</div>
 			<div className={sidebarFooterClass}>
-				<AccountSwitcher action={<ThemeSlider compact />} />
+				{teamTriage ? (
+					<ThemeSlider compact />
+				) : (
+					<AccountSwitcher action={<ThemeSlider compact />} />
+				)}
 			</div>
 		</aside>
 	);
