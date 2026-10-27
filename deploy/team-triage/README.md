@@ -22,21 +22,17 @@ listens publicly and the security group has no inbound rules.
 ## Shipping a change
 
 1. Merge the change to `main` (PRs required).
-2. Tag and push:
-
-   ```sh
-   git switch main && git pull
-   git tag deploy-$(date -u +%Y%m%d-%H%M)
-   git push origin --tags
-   ```
-
-3. Watch the **Deploy Team triage** workflow. It builds the release
-   (`package-release.sh`), uploads it to S3, and runs `install-release.sh` on the
-   host through AWS SSM. A failed health check rolls back automatically.
+2. When **CI** passes on that push, **Deploy Team triage** starts on its own.
+   It builds the release (`package-release.sh`), uploads it to S3, and runs
+   `install-release.sh` on the host through AWS SSM. A failed health check
+   rolls back automatically.
+3. To redeploy the current `main` (for example after rotating the xAI key),
+   use **Actions → Deploy Team triage → Run workflow** on `main`.
 
 No AWS or Cloudflare credentials are needed: GitHub authenticates to AWS via
 OIDC, and only the `production` environment of `openclaw/birdclaw` can assume
-the deploy role. Tags must point at a commit on `main`.
+the deploy role, and that environment only accepts `main`. A commit ships only
+after its CI run on `main` succeeded.
 
 Release tarballs contain only the npm package allowlist (`bin/`, `dist/`,
 `package.json`), production `node_modules` pinned by `bun.lock`, and this
@@ -48,7 +44,7 @@ directory.
 | --- | --- |
 | Host | EC2 `i-061b1847af5758622` (t4g.small, Ubuntu 24.04 arm64), AWS account 631860342038, us-west-1 |
 | Shell access | `aws ssm start-session --target i-061b1847af5758622` (no SSH) |
-| Releases | `/opt/birdclaw-team/releases/<tag>-<sha>`, active one at `/opt/birdclaw-team/current` |
+| Releases | `/opt/birdclaw-team/releases/main-<sha>`, active one at `/opt/birdclaw-team/current` |
 | Mentions store | `/var/lib/birdclaw-team/mentions/birdclaw.sqlite` (0700 dir, owner `birdclaw`) |
 | Auth HOME | `/var/lib/birdclaw-team/auth` |
 | Config | `/etc/birdclaw-team/team-triage.env` (copied from `mcbird.env` on every deploy) |
@@ -70,8 +66,8 @@ aws ssm put-parameter --region us-west-1 --overwrite --type SecureString \
 
 The next deploy picks it up (or re-run the latest deploy workflow).
 
-**Roll back.** Re-run the deploy workflow for an earlier `deploy-*` tag, or on
-the host:
+**Roll back.** Revert the change on `main` (the revert deploys like any merge),
+or switch releases on the host:
 
 ```sh
 ln -sfn /opt/birdclaw-team/releases/<older> /opt/birdclaw-team/current
