@@ -1,11 +1,14 @@
 name: Deploy Team triage
 
-# Ship https://mcbird.openclaw.ai by pushing a tag:
-#   git tag deploy-$(date -u +%Y%m%d-%H%M) && git push origin --tags
+# Ships https://mcbird.openclaw.ai after CI passes on a push to main.
+# "Run workflow" redeploys the commit at the head of main after its CI passed.
 # See deploy/team-triage/README.md.
 on:
-  push:
-    tags: ["deploy-*"]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: deploy-team-triage
@@ -13,6 +16,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
 
 env:
   AWS_REGION: us-west-1
@@ -24,6 +28,13 @@ env:
 jobs:
   build:
     name: Build release
+    # Only green CI runs from pushes to main in this repository, or a manual run on main.
+    if: >-
+      github.ref == 'refs/heads/main' && (
+        github.event_name == 'workflow_dispatch' || (
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_repository.full_name == github.repository))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
@@ -32,13 +43,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
 
-      - name: Require a plain deploy tag on main
+      - name: Require the commit to be on main and green
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          # The tag name reaches a root shell on the host; allow only safe characters.
-          [[ "$GITHUB_REF_NAME" =~ ^deploy-[A-Za-z0-9._-]{1,80}$ ]] || { echo "invalid tag name"; exit 1; }
-          git fetch --no-tags origin main
-          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+          sha=$(git rev-parse HEAD)
+          git merge-base --is-ancestor "$sha" origin/main
+          # Manual runs have no triggering CI run; require a successful CI push run for this commit.
+          ok=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$sha&event=push&status=success" --jq '.total_count')
+          [[ "$ok" -gt 0 ]] || { echo "no successful CI push run for $sha"; exit 1; }
 
       - name: Cache exact Bun canary
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -53,7 +70,7 @@ jobs:
 
       - name: Release metadata
         id: meta
-        run: echo "release_id=${GITHUB_REF_NAME}-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        run: echo "release_id=main-$(git rev-parse HEAD | cut -c1-12)" >> "$GITHUB_OUTPUT"
 
       - name: Package
         id: package
@@ -97,7 +114,7 @@ jobs:
 
       - name: Validate release metadata
         run: |
-          [[ "$RELEASE_ID" =~ ^deploy-[A-Za-z0-9._-]{1,100}$ ]] || { echo "invalid release id"; exit 1; }
+          [[ "$RELEASE_ID" =~ ^main-[0-9a-f]{12}$ ]] || { echo "invalid release id"; exit 1; }
           [[ "$RELEASE_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo "invalid sha256"; exit 1; }
 
       - name: Upload release to S3
