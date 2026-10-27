@@ -31,7 +31,10 @@ export const sidebarBrandTaglineClass = "text-[12px] text-[var(--ink-soft)]";
 
 export const sidebarNavClass = "mt-2 flex flex-col gap-0.5";
 
-export const sidebarFooterClass = "flex flex-col gap-2 pb-1";
+/** Brand and primary nav; scrolls on short viewports so the footer stays reachable. */
+export const sidebarScrollClass = "flex min-h-0 flex-col overflow-y-auto";
+
+export const sidebarFooterClass = "flex shrink-0 flex-col gap-2 pb-1";
 
 export const navLinkClass =
 	"nav-link group flex items-center justify-center gap-4 rounded-full px-3 py-2.5 text-[15px] text-[var(--ink)] transition-colors duration-150 hover:bg-[var(--bg-hover)] min-[1100px]:justify-start";
