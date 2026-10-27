@@ -54,7 +54,7 @@ jobs:
           sha=$(git rev-parse HEAD)
           git merge-base --is-ancestor "$sha" origin/main
           # Manual runs have no triggering CI run; require a successful CI push run for this commit.
-          ok=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$sha&event=push&status=success" --jq '.total_count')
+          ok=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$sha&branch=main&event=push&status=success" --jq '.total_count')
           [[ "$ok" -gt 0 ]] || { echo "no successful CI push run for $sha"; exit 1; }
 
       - name: Cache exact Bun canary
