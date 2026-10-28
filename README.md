@@ -26,7 +26,7 @@ The package is also published on npm:
 npm install -g birdclaw
 ```
 
-The npm and Homebrew installs retain the public Node.js `>=26.5.1 <27` contract. Source development uses one checksum-pinned Bun `1.4.0-canary.1` build and keeps Node as a tested compatibility lane. See the [installation guide](https://birdclaw.sh/install.html) for setup and the [Bun canary reference](https://birdclaw.sh/bun-canary.html) for exact checksums, constraints, and rollback boundaries.
+The npm and Homebrew installs retain the public Node.js `>=26.5.1 <27` contract. Use patched Node 26.12.1 or newer Node 26. Source development uses the checksum-pinned OpenClaw Bun `1.4.4-canary.1+191755ec1` build and keeps Node as a tested compatibility lane. See the [installation guide](https://birdclaw.sh/install.html) for setup and the [Bun canary reference](https://birdclaw.sh/bun-canary.html) for exact checksums, constraints, and rollback boundaries.
 
 ## Quick start
 
@@ -103,7 +103,7 @@ Vite generates the compact app/favicon logo from the original artwork during con
 
 The CLI build bundles the Effect modules it uses to reduce process startup work. Other direct dependencies remain external, and the installed package keeps the same Node and Bun runtime contracts.
 
-The wrapper installs and verifies the exact Rust-port canary recorded in `toolchains/bun-canary.conf`; it refuses a newer rolling canary with a different checksum or revision. CI also runs Bun/Istanbul and Node/V8 coverage, dual-runtime installed-package smoke, and Playwright against the Bun production server.
+The wrapper installs and verifies the exact patched Rust-port build recorded in `toolchains/bun-canary.conf`; it refuses a newer rolling canary with a different checksum or revision. CI also runs Bun/Istanbul and Node/V8 coverage, dual-runtime installed-package smoke, and Playwright against the Bun production server.
 
 ## License
 

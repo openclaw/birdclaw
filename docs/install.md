@@ -5,19 +5,19 @@ description: "Install birdclaw via Homebrew, npm, or from source. Optional xurl 
 
 # Install
 
-The published `birdclaw` package is a Node CLI plus a local web app. Source development and Birdclaw's production deployment use one checksum-pinned Bun 1.4 canary, while the npm/Homebrew artifact retains its public Node 26 contract.
+The published `birdclaw` package is a Node CLI plus a local web app. Source development and Birdclaw's production deployment use one checksum-pinned patched OpenClaw Bun 1.4 build, while the npm/Homebrew artifact retains its public Node 26 contract.
 
 ## Requirements
 
-- **Homebrew/npm runtime:** Node.js `>=26.5.1 <27`
-- **Source toolchain:** the exact Bun `1.4.0-canary.1+f972c287f` recorded in `toolchains/bun-canary.conf`
+- **Homebrew/npm runtime:** Node.js `>=26.5.1 <27`; use patched Node `26.12.1` or newer Node 26
+- **Source toolchain:** the exact OpenClaw Bun `1.4.4-canary.1+191755ec1` recorded in `toolchains/bun-canary.conf`
 - **Source bootstrap:** `curl`, `unzip`, and either macOS arm64 or Linux x64
 - **macOS** is recommended for archive autodiscovery (Spotlight `mdfind`); Linux works for everything else
 - **SQLite** uses the shared `node:sqlite` API under Node and Bun — no separate SQLite install is needed
 
-Bun 1.4 is the Rust port of Bun, but it still embeds JavaScriptCore, SQLite, and other C/C++ components. The selected build is a canary rather than a stable release. Birdclaw verifies the archive checksum, extracted binary checksum, full source revision, and `bun --revision` before using it.
+Bun 1.4 is the Rust port of Bun, but it still embeds JavaScriptCore, SQLite, and other C/C++ components. The selected fork is based on stable Bun 1.4.4 and retains a canary revision label. It additionally rejects compromised keys on persisted TLS sessions. Birdclaw verifies the archive checksum, extracted binary checksum, full source revision, and `bun --revision` before using it.
 
-Bun's public `canary` download is rolling, so Birdclaw does not use it. The bootstrap downloads the revision-specific artifact from Bun's Buildkite build `90456` and fails closed on any checksum or revision mismatch. You can also pass a verified cached archive explicitly:
+Bun's public `canary` download is rolling, so Birdclaw does not use it. The bootstrap downloads the exact published OpenClaw fork release and fails closed on any checksum or revision mismatch. You can also pass a verified cached archive explicitly:
 
 ```bash
 BIRDCLAW_BUN_ARCHIVE=~/Downloads/bun-darwin-aarch64.zip \
@@ -124,7 +124,7 @@ Add it to `~/.profile` or your shell rc to persist. The inbox uses OpenAI for lo
 - **npm:** `npm i -g birdclaw@latest`.
 - **Source:** `git pull && ./scripts/bun-canary.sh install --frozen-lockfile && ./scripts/bun-canary.sh run --bun build`.
 
-If the pinned Buildkite artifact is unavailable, use the previously verified archive through `BIRDCLAW_BUN_ARCHIVE`. Updating to a different Bun canary is a repository change with new artifact URLs, checksums, and a full compatibility/performance rerun, not an automatic upgrade.
+If the pinned release artifact is unavailable, use the previously verified archive through `BIRDCLAW_BUN_ARCHIVE`. Updating to a different Bun build is a repository change with new artifact URLs, checksums, and a full compatibility/performance rerun, not an automatic upgrade.
 
 ### Upgrading to 0.14.0
 

@@ -101,10 +101,10 @@
 		"nanoid": "6.0.2"
 	},
 	"engines": {
-		"bun": "1.4.0",
+		"bun": "1.4.4",
 		"node": ">=26.5.1 <27"
 	},
-	"packageManager": "bun@1.4.0-canary.1+f972c287f",
+	"packageManager": "bun@1.4.4-canary.1+191755ec1",
 	"trustedDependencies": [
 		"esbuild",
 		"lightningcss"

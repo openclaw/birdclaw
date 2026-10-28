@@ -41,7 +41,7 @@ describe("Bun canary toolchain", () => {
 			"BUN_CANARY_LINUX_X64_ARTIFACT_URL",
 		]) {
 			expect(config[key]).toMatch(
-				/^https:\/\/buildkite\.com\/organizations\/bun\/pipelines\/bun\/builds\/\d+\/jobs\/[0-9a-f-]+\/artifacts\/[0-9a-f-]+$/,
+				/^https:\/\/github\.com\/openclaw\/bun\/releases\/download\/openclaw-v[^/]+\/bun-(darwin-aarch64|linux-x64)\.zip$/,
 			);
 		}
 	});

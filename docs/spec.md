@@ -48,7 +48,7 @@ Repo: `steipete/birdclaw`
 ## Decisions
 
 - language: TypeScript
-- source/runtime toolchain: checksum-pinned Bun 1.4 Rust-port canary; Node 26.5.1+ remains the npm/Homebrew compatibility contract
+- source/runtime toolchain: checksum-pinned patched OpenClaw Bun 1.4 Rust-port build; Node 26.5.1+ remains the npm/Homebrew compatibility contract
 - database: SQLite
 - query layer: native SQLite with focused typed row codecs
 - search: FTS5 day 1
@@ -81,7 +81,7 @@ Repo: `steipete/birdclaw`
 
 ### Runtime / workspace
 
-- Bun `1.4.0-canary.1+f972c287f` from source revision `f972c287f9b7a71754b0b0b1cd18722aa3c75280`
+- OpenClaw Bun `1.4.4-canary.1+191755ec1` from source revision `191755ec115ece3dd642eba3cb0143cecb5e5d7a`
 - `bun.lock` as the source dependency graph and Bun as the default command runner
 - Node.js `>=26.5.1 <27` as a first-class compatibility and npm/Homebrew runtime
 - TypeScript `strict: true`

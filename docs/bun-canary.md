@@ -1,29 +1,28 @@
 ---
-title: Bun 1.4 canary
-description: "Exact Bun 1.4 Rust-port build, compatibility constraints, verification, and rollback boundaries."
+title: Pinned Bun 1.4
+description: "Exact patched OpenClaw Bun 1.4 Rust-port build, compatibility constraints, verification, and rollback boundaries."
 ---
 
-# Bun 1.4 canary
+# Pinned Bun 1.4
 
-Birdclaw source development and its source-backed production deployment use one experimentally verified Bun 1.4 canary. This is not a floating `bun upgrade --canary` policy.
+Birdclaw source development and source-backed deployments select one checksum-pinned OpenClaw Bun 1.4.4 build. The existing `bun-canary` filenames remain the installation entry points; they do not select a floating canary.
 
 ## Exact build
 
 | Field | Value |
 | --- | --- |
-| Runtime revision | `1.4.0-canary.1+f972c287f` |
-| Source commit | `f972c287f9b7a71754b0b0b1cd18722aa3c75280` |
-| Buildkite build | `bun/bun#90456` |
-| macOS arm64 asset id | `505967771` |
-| macOS arm64 archive SHA-256 | `a172ae4984af3eaf986ab28268c9084a746f168fa77160bcd67d9bf83a9d50f9` |
-| macOS arm64 binary SHA-256 | `9ff964c8b0cc9090f2b6f05a2e3f1da5c6d335ddfb7dbf23b47b14b70e53feac` |
-| Linux x64 asset id | `505967785` |
-| Linux x64 archive SHA-256 | `c6633a63e54d2371cfc1841f1a985fadae686a60f0b67e7d7248d8e0254772bf` |
-| Linux x64 binary SHA-256 | `f150600ea0d05d12bfb3817052760591c30f870184a3008fca9667132be957a9` |
+| Runtime revision | `1.4.4-canary.1+191755ec1` |
+| Source commit | `191755ec115ece3dd642eba3cb0143cecb5e5d7a` |
+| Release | `openclaw-v1.4.4-20261026-191755ec11-webkit-b82bc917e9` |
+| WebKit prebuilt | `b82bc917e99110b61c3a21202d6def7457aa194c` |
+| macOS arm64 archive SHA-256 | `d2fe652e031b44f9971c8184ae688f24f06b885a7f22bf082b15cb6ab524de51` |
+| macOS arm64 binary SHA-256 | `c6326ed34d59a7f648b9871a077923f5d9a5cc1c54d25629d1ff70648c51953c` |
+| Linux x64 archive SHA-256 | `a59df8273c232782c16a6c0e680511becd9a49ba08fa6a1adc7baea1a632de0b` |
+| Linux x64 binary SHA-256 | `0cef667e2f3fd465b6429904ed074381a679be379ec44fa42b5f460ed118b2b8` |
 
-The machine-readable source of truth is `toolchains/bun-canary.conf`. `scripts/install-bun-canary.sh` downloads the revision-specific Buildkite artifact from build `90456`, verifies both checksums, then requires the exact `bun --revision`. A cached archive can be supplied through `BIRDCLAW_BUN_ARCHIVE`.
+The machine-readable source of truth is `toolchains/bun-canary.conf`. `scripts/install-bun-canary.sh` downloads the exact [published OpenClaw fork](https://github.com/openclaw/bun/releases/tag/openclaw-v1.4.4-20261026-191755ec11-webkit-b82bc917e9), verifies both checksums, then requires the exact `bun --revision`. A cached archive can be supplied through `BIRDCLAW_BUN_ARCHIVE`.
 
-The GitHub `canary` release replaces same-named assets as Bun's `main` branch advances; its observed asset ids are retained only as provenance. Birdclaw never downloads that moving alias. If the immutable Buildkite artifact is unavailable, installation fails closed and requests a cached exact archive rather than substituting a newer canary.
+The fork includes the upstream compromised-key rejection and additional enforcement for persisted TLS sessions. Stock Bun 1.4.4 alone does not provide the same saved-session remediation. Do not replace the selected archive with stock stable or a rolling canary. If the exact release artifact is unavailable, installation fails closed and requests a cached exact archive.
 
 ## What “Rust port” means
 
@@ -33,9 +32,9 @@ Bun 1.4 is the first release line after Bun's Zig-to-Rust port. It preserves Bun
 
 ### Node contract
 
-The npm and Homebrew package remains a Node CLI with `#!/usr/bin/env node` and `engines.node: >=26.5.1 <27`. CI runs Node coverage and builds on the maintained Node 26 version in `.node-version`, while installed-package smoke stays on the public Node 26.5.1 floor as well as the exact Bun binary.
+The npm and Homebrew package remains a Node CLI with `#!/usr/bin/env node` and `engines.node: >=26.5.1 <27`. CI runs Node coverage and builds on the maintained Node 26 version in `.node-version`, and installed-package smoke uses that patched Node 26 version as well as the exact Bun binary. The public `>=26.5.1 <27` range remains a compatibility contract, not a security recommendation: use Node 26.12.1 or newer patched Node 26.
 
-Bun reports Node compatibility `26.3.0`, below Birdclaw's public Node floor. Birdclaw does not weaken that floor or pretend Bun is a qualifying Node binary; Bun is identified through `process.versions.bun` and its own exact revision.
+Bun is identified through `process.versions.bun` and its own exact revision, independently of its reported Node compatibility version.
 
 ### SQLite and WAL
 
@@ -44,6 +43,8 @@ Birdclaw keeps the shared `node:sqlite` adapter. Bun's implementation supports t
 SQLite WAL readers sometimes need to create `-wal`/`-shm` coordination files after a clean process exit. Birdclaw therefore opens managed readers normally under Bun and immediately applies `pragma query_only = on`; Node keeps its native read-only open. Both connections remain unable to execute application writes or DDL, while Bun's SQLite library can establish WAL coordination. Dual-runtime package smoke covers MCP startup from a clean installed database, the case that exposed this constraint.
 
 ### Tests and coverage
+
+The constraints below record the original f972c287f migration evidence. They are retained conservatively; they do not establish fresh performance or complete compatibility qualification of the selected 1.4.4 fork. Keep the pins and assertions until their owning checks demonstrate a supported change.
 
 Vitest runs under both runtimes. Bun needs `zod` inlined through Vitest's dependency server to avoid an externalization interop failure in the exact canary.
 
@@ -83,7 +84,9 @@ BIRDCLAW_NODE_BIN="$(command -v node)" \
   ./scripts/bun-canary.sh scripts/package-smoke.mjs --json
 ```
 
-## Performance comparison
+## Historical performance comparison
+
+The published figures below apply only to the retired `f972c287f` canary. They must not be read as performance claims for the selected 1.4.4 fork. New qualification must identify the exact artifact and its own samples.
 
 `runtime-perf.mjs` records raw cold CLI, server-listening, first-response, and RSS samples with median, p95, deterministic bootstrap intervals, runtime identity, artifact digests, physical database hashes, and WAL-aware logical SQLite hashes. Run it separately for the landed pre-migration artifact on Node (A), the migration artifact on Node (B), and the same migration artifact on Bun (C):
 
@@ -112,4 +115,4 @@ Across the six browser scenarios, Bun changed ready medians by -5.9% to +0.3% an
 
 ## Production rollback boundary
 
-Production installs the canary in a revision-specific side-by-side path. It does not overwrite `/opt/homebrew/bin/bun`, the stable Bun channel, the Node 26 runtime, or the saved Node LaunchAgent plist. Rollback restores the previous Node command vector and restarts the existing service; no database or package-manager downgrade is required.
+Source-backed deployments install the pinned build in a revision-specific side-by-side path. It does not overwrite `/opt/homebrew/bin/bun`, the stable Bun channel, the Node 26 runtime, or the saved Node LaunchAgent plist. Rollback restores the previous Node command vector and restarts the existing service; no database or package-manager downgrade is required.
