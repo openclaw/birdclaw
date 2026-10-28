@@ -84,7 +84,7 @@ else
 	command -v curl >/dev/null 2>&1 || fail "curl is required"
 	download_url=${BIRDCLAW_BUN_DOWNLOAD_URL:-$artifact_url}
 	if ! curl -fsSL --retry 3 --retry-delay 2 "$download_url" -o "$archive"; then
-		fail "could not download the pinned Buildkite artifact; set BIRDCLAW_BUN_ARCHIVE to a cached copy"
+		fail "could not download the pinned OpenClaw release artifact; set BIRDCLAW_BUN_ARCHIVE to a cached copy"
 	fi
 fi
 

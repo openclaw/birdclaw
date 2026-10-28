@@ -16,6 +16,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import { smokeWithoutBird } from "./birdless-smoke.mjs";
 import { smokeNativeDms } from "./native-dm-smoke.mjs";
+import { readBunCanaryConfig } from "../src/lib/bun-toolchain.ts";
 
 const execFileAsync = promisify(execFile);
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -395,7 +396,7 @@ async function smokeRuntime({
 
 try {
 	const { stdout: bunRevision } = await run(bunBin, ["--revision"]);
-	if (!bunRevision.trim().startsWith("1.4.0-canary.1+")) {
+	if (bunRevision.trim() !== readBunCanaryConfig().BUN_CANARY_REVISION) {
 		throw new Error(`Unexpected Bun revision: ${bunRevision}`);
 	}
 	const { stdout: nodeVersionOutput } = await run(nodeBin, ["--version"]);

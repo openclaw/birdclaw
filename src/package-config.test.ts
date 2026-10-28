@@ -58,10 +58,10 @@ describe("package configuration", () => {
 			"BIRDCLAW_COVERAGE_PROVIDER=v8 node",
 		);
 		expect(packageJson.packageManager).toMatch(
-			/^bun@1\.4\.0-canary\.1\+[0-9a-f]{9}$/,
+			/^bun@1\.4\.4-canary\.1\+[0-9a-f]{9}$/,
 		);
 		expect(packageJson.engines).toMatchObject({
-			bun: "1.4.0",
+			bun: "1.4.4",
 			node: ">=26.5.1 <27",
 		});
 		expect(packageJson.overrides).toEqual({
