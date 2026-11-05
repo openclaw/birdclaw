@@ -151,7 +151,7 @@ export function ingestTweetPayload(
 					// A collision with an existing canonical handle fails closed rather than merging identities.
 					db.prepare(
 						"insert into profiles(id,handle,display_name,bio,created_at) values (?,?,?,'Grok-extracted handle; X identity unverified',?) on conflict(id) do nothing",
-					).run(tweet.author_id, "@" + match[1], author.username, observedAt);
+					).run(tweet.author_id, match[1], author.username, observedAt);
 					profileId = tweet.author_id;
 				} else {
 					const profile = author

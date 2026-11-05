@@ -107,8 +107,25 @@ afterEach(() => {
 	resetBirdclawPathsForTests();
 	delete process.env.BIRDCLAW_HOME;
 	if (tempRoot) {
-		rmSync(tempRoot, { recursive: true, force: true });
+		const root = tempRoot;
 		tempRoot = undefined;
+		for (let attempt = 0; attempt < 8; attempt += 1) {
+			try {
+				rmSync(root, { recursive: true, force: true });
+				break;
+			} catch (error) {
+				const busy =
+					typeof error === "object" &&
+					error !== null &&
+					"code" in error &&
+					(error as { code?: string }).code === "EBUSY";
+				if (!busy) throw error;
+				const until = Date.now() + 50;
+				while (Date.now() < until) {
+					// Windows can keep the sqlite file locked for a moment after close.
+				}
+			}
+		}
 	}
 });
 
@@ -943,6 +960,47 @@ it("refreshes a payload's FTS rows through indexed lookups while preserving unre
 			source: "test",
 		});
 		expect(statements.some((sql) => /tweets_fts/.test(sql))).toBe(false);
+	} finally {
+		db.close();
+	}
+});
+
+it("stores a Grok handle without a leading at sign", () => {
+	tempRoot = mkdtempSync(path.join(os.tmpdir(), "birdclaw-grok-handle-"));
+	process.env.BIRDCLAW_HOME = tempRoot;
+	resetBirdclawPathsForTests();
+	resetDatabaseForTests();
+	getNativeDb({ seedDemoData: false });
+	const db = new NativeSqliteDatabase(path.join(tempRoot, "birdclaw.sqlite"));
+	try {
+		ingestTweetPayload(db, {
+			accountId: "fixture",
+			source: "grok",
+			payload: {
+				data: [
+					{
+						id: "grok_post_1",
+						author_id: "grok-handle:example",
+						text: "hello",
+						created_at: "2026-10-20T12:00:00.000Z",
+					},
+				],
+				includes: {
+					users: [
+						{
+							id: "grok-handle:example",
+							username: "example",
+							name: "example",
+						},
+					],
+				},
+			},
+		});
+		expect(
+			db
+				.prepare("select handle from profiles where id = 'grok-handle:example'")
+				.get(),
+		).toEqual({ handle: "example" });
 	} finally {
 		db.close();
 	}
