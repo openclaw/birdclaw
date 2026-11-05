@@ -44,7 +44,12 @@ describe("Grok cited extraction boundary", () => {
 		expect(result.data[0].created_at).toBe("2026-10-20T12:00:00.000Z");
 		expect(result.data[0].author_id).toBe("grok-handle:example");
 	});
-	it("rejects uncited, off-host, out-of-window, malformed and incomplete extraction", () => {
+	it("drops a cited post from the date-only search day when it is before since", () => {
+		expect(
+			parseGrokSearch(fixture(), "2026-10-21T00:00:00Z", until).data,
+		).toEqual([]);
+	});
+	it("rejects uncited, off-host, malformed and incomplete extraction", () => {
 		for (const body of [
 			fixture(undefined, []),
 			fixture([{ url: "https://evil.test/example/status/123", text: "bad" }]),
@@ -52,9 +57,9 @@ describe("Grok cited extraction boundary", () => {
 			{ ...fixture(), status: "incomplete" },
 		])
 			expect(() => parseGrokSearch(body, since, until)).toThrow(Error);
-		expect(() =>
-			parseGrokSearch(fixture(), "2026-10-21T00:00:00Z", until),
-		).toThrow(Error);
+		expect(
+			parseGrokSearch(fixture(), "2026-10-21T00:00:00Z", until).data,
+		).toEqual([]);
 	});
 	it("accepts provider-level i/status citations and rejects unexecuted search", () => {
 		const body = {
