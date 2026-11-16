@@ -11,16 +11,16 @@ Birdclaw source development and source-backed deployments select one checksum-pi
 
 | Field | Value |
 | --- | --- |
-| Runtime revision | `1.4.4-canary.1+191755ec1` |
-| Source commit | `191755ec115ece3dd642eba3cb0143cecb5e5d7a` |
-| Release | `openclaw-v1.4.4-20261026-191755ec11-webkit-b82bc917e9` |
-| WebKit prebuilt | `b82bc917e99110b61c3a21202d6def7457aa194c` |
-| macOS arm64 archive SHA-256 | `d2fe652e031b44f9971c8184ae688f24f06b885a7f22bf082b15cb6ab524de51` |
-| macOS arm64 binary SHA-256 | `c6326ed34d59a7f648b9871a077923f5d9a5cc1c54d25629d1ff70648c51953c` |
-| Linux x64 archive SHA-256 | `a59df8273c232782c16a6c0e680511becd9a49ba08fa6a1adc7baea1a632de0b` |
-| Linux x64 binary SHA-256 | `0cef667e2f3fd465b6429904ed074381a679be379ec44fa42b5f460ed118b2b8` |
+| Runtime revision | `1.4.4-canary.1+9debcc4b9` |
+| Source commit | `9debcc4b9db331d8ea8be404754baf1ffd0c7175` |
+| Release | `openclaw-v1.4.4-20261115-9debcc4b9d-webkit-3357f9d63e` |
+| WebKit prebuilt | `3357f9d63e6dd87a53f2aade723482130a55c0cd` |
+| macOS arm64 archive SHA-256 | `22050f464255e7344d6e5499f331e23bf23f2f4109150fb8c7e505e54a8548ea` |
+| macOS arm64 binary SHA-256 | `ed1f07d70eba78a1a9d4e1a9d183030bb3cb03179d510726d44f0d9357f5462b` |
+| Linux x64 archive SHA-256 | `af95f15c53765076dfd9d0858cc09f3cd247678737d2a4035a70ad1725db77ef` |
+| Linux x64 binary SHA-256 | `c4588310781ec7f7af339d605b0cd22aa97056892a7ab81975c90a4b4fe53e7a` |
 
-The machine-readable source of truth is `toolchains/bun-canary.conf`. `scripts/install-bun-canary.sh` downloads the exact [published OpenClaw fork](https://github.com/openclaw/bun/releases/tag/openclaw-v1.4.4-20261026-191755ec11-webkit-b82bc917e9), verifies both checksums, then requires the exact `bun --revision`. A cached archive can be supplied through `BIRDCLAW_BUN_ARCHIVE`.
+The machine-readable source of truth is `toolchains/bun-canary.conf`. `scripts/install-bun-canary.sh` downloads the exact [published OpenClaw fork](https://github.com/openclaw/bun/releases/tag/openclaw-v1.4.4-20261115-9debcc4b9d-webkit-3357f9d63e), verifies both checksums, then requires the exact `bun --revision`. A cached archive can be supplied through `BIRDCLAW_BUN_ARCHIVE`.
 
 The fork includes the upstream compromised-key rejection and additional enforcement for persisted TLS sessions. Stock Bun 1.4.4 alone does not provide the same saved-session remediation. Do not replace the selected archive with stock stable or a rolling canary. If the exact release artifact is unavailable, installation fails closed and requests a cached exact archive.
 

@@ -2,6 +2,8 @@
 
 ## 0.16.4 - Unreleased
 
+- Refresh the checksum-pinned OpenClaw Bun build to `9debcc4b9`, with the matching WebKit `3357f9d63e` release.
+
 ## 0.16.3 - 2026-10-24
 
 **Highlights:** Keep Git backups flowing after locally merged legacy profiles or stray Finder metadata, with strict identity proof and backup validation intact.
