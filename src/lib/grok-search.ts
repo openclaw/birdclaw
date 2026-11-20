@@ -94,12 +94,10 @@ export function parseGrokSearch(
 		const post = canonical(row.url);
 		if (!post || !cited.has(post.id)) throw new Error("Uncited Grok result");
 		const created = Number((BigInt(post.id) >> 22n) + 1288834974657n);
-		if (
-			!Number.isFinite(created) ||
-			created < Date.parse(since) ||
-			created >= Date.parse(until)
-		)
-			throw new Error("Out-of-window Grok result");
+		if (!Number.isFinite(created)) throw new Error("Out-of-window Grok result");
+		// x_search only accepts calendar dates, so a boundary post can be cited
+		// from the requested day and still fall before the exact since instant.
+		if (created < Date.parse(since) || created >= Date.parse(until)) continue;
 		if (seen.has(post.id)) continue;
 		seen.add(post.id);
 		// Do not invent numeric X identity IDs. These are explicitly synthetic extraction identities.
